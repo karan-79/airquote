@@ -10,6 +10,7 @@
   "homepage": "https://github.com/karan-79/airquote",
   "repository": "https://github.com/karan-79/airquote",
   "license": "MIT",
+  "privacyPolicyUrl": "https://github.com/karan-79/airquote#privacy",
   "types": "./types/airquote.d.ts",
   "keywords": [
     "voice",

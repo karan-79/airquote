@@ -80,7 +80,9 @@ When Airquote isn't sure, it treats the prompt as typed. A prompt it recognizes 
 - **Tap mode is detected by elimination.** A few keyboard actions also put text in the box without a key press. Airquote recognizes prompts recalled from this session (Up-arrow, Ctrl+R, rewind) and an accepted suggestion (Tab), and leaves them alone. These can still be taken for speech and cleaned: a prompt from an earlier session recalled with Up-arrow or Ctrl+R, text written with the Ctrl+G editor into an empty box, a Ctrl+S stash coming back, and undo right after clearing the box.
 - **Hold mode relies on the "keep holding…" hint.** If Claude Code changes that text, Airquote falls back to the four-word check.
 
-## What Airquote reads, sends and changes
+## Privacy
+
+What Airquote reads, sends and changes:
 
 - **Reads:** your edits in the prompt box and each prompt you send, the hint line under the box, and the conversation's messages (to recognize prompts you recall; they're only sent anywhere as described below).
 - **Sends:** one model call per spoken prompt, to the rewrite model you chose, through Claude Code's own model call (so it goes to Anthropic, like the rest of your session). It contains your spoken words (not your pastes, code or file mentions), your dictionary and extra instructions, and, while **Share repo and conversation context** is on, your repository's file list (up to about 12,000 characters) and the last 4 messages (up to 600 characters each). Airquote contacts nothing else.
