@@ -33,7 +33,7 @@ Airquote works with both. You don't need an API key or another app: it uses the 
 | **Rewrite mode** (`mode`) | `enhance` | `clean`: removes filler, fixes punctuation and applies your mid-sentence corrections. Your words, order and tone stay.<br>`enhance`: the same, then lays it out for easier reading (sentences, paragraphs, a list if you clearly listed things), using only your own words. If a dictation is too unclear to lay out, it is only cleaned and you see a short message.<br>`off`: no rewrite. Claude is still told the prompt was spoken. |
 | **Rewrite model** (`model`) | `haiku` | `haiku`, `sonnet` or `opus`. Haiku is fastest. Sonnet and Opus are slower and use more of your plan's usage. |
 | **Personal dictionary** (`dictionary`) | empty | Words to always spell exactly, separated by commas. Example: `Kubernetes, Tailwind, Acme Cloud` |
-| **Extra rewrite instructions** (`instructions`) | empty | Your own rules for the rewrite. Example: `Keep my casual tone. Use British English.` |
+| **Extra rewrite instructions** (`instructions`) | empty | Your own rules for the style of the rewrite. Example: `Keep my casual tone. Use British English.` They can't add, drop or change what you said. |
 | **Attach original transcript** (`attach_transcript`) | on | When a prompt is rewritten, Claude also gets your exact dictated words as hidden context. Off: Claude sees only the rewrite. |
 | **Share repo and conversation context** (`share_context`) | on | Lets the rewrite model see your repo's file names and the last few messages, so names come out right. Off: it sees only your words, dictionary and instructions. |
 

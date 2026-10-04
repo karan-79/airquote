@@ -50,7 +50,7 @@
     "instructions": {
       "type": "string",
       "title": "Extra rewrite instructions",
-      "description": "Your own guidance for how prompts should be rewritten, e.g. \"keep my casual tone\", \"always end with: ask before editing files\", \"write in British English\". Applied in clean and enhance modes.",
+      "description": "Your own guidance for the style of the rewrite, e.g. \"keep my casual tone\", \"write in British English\". It can't add, drop or change what you said. Applied in clean and enhance modes.",
       "default": ""
     },
     "attach_transcript": {
