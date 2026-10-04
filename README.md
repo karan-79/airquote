@@ -76,6 +76,7 @@ When Airquote isn't sure, it treats the prompt as typed. A prompt it recognizes 
 
 ## Known limits
 
+- **Terminal only.** Airquote works in Claude Code in your terminal (the CLI). In the desktop app and IDE extensions it does nothing, because only the terminal tells it which keys you pressed.
 - **Tap mode is detected by elimination.** A few keyboard actions also put text in the box without a key press. Airquote recognizes prompts recalled from this session (Up-arrow, Ctrl+R, rewind) and an accepted suggestion (Tab), and leaves them alone. These can still be taken for speech and cleaned: a prompt from an earlier session recalled with Up-arrow or Ctrl+R, text written with the Ctrl+G editor into an empty box, a Ctrl+S stash coming back, and undo right after clearing the box.
 - **Hold mode relies on the "keep holding…" hint.** If Claude Code changes that text, Airquote falls back to the four-word check.
 
