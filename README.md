@@ -32,7 +32,7 @@ Airquote works out of the box. These six settings let you tune it:
 
 | Setting | Default | What it does |
 |---|---|---|
-| **Rewrite mode** (`mode`) | `enhance` | `enhance`: cleans up your prompt and gives it a clear structure (main ask first, several asks as a list).<br>`clean`: removes filler and fixes punctuation, but keeps your own wording.<br>`off`: no rewrite. Claude is still told the prompt was spoken. |
+| **Rewrite mode** (`mode`) | `enhance` | `clean`: fixes the writing only: removes filler, fixes punctuation, applies your mid-sentence corrections. Your words, order and tone stay.<br>`enhance`: the same clean-up, then lays it out for easier reading (sentences, paragraphs, a list if you clearly listed things), using only your own words. If a dictation is too unclear to lay out without guessing, it is only cleaned up and you see a short message.<br>`off`: no rewrite. Claude is still told the prompt was spoken. |
 | **Rewrite model** (`model`) | `haiku` | The model that rewrites your dictation: `haiku`, `sonnet` or `opus`. Haiku is fastest. Sonnet and Opus can follow your extra instructions more closely, but each spoken prompt takes several seconds longer and uses more of your plan's usage. |
 | **Personal dictionary** (`dictionary`) | empty | Words to always spell exactly, separated by commas. Example: `Kubernetes, Tailwind, Acme Cloud` |
 | **Extra rewrite instructions** (`instructions`) | empty | Your own rules for the rewrite. Example: `Keep my casual tone. Use British English.` |
@@ -105,8 +105,18 @@ That call contains:
 - **Tap mode sends right away.** The second tap sends the prompt, so you can't review the rewrite first. In hold mode you can edit the raw text before pressing Enter, but the rewrite still happens on send.
 - **Spoken prompts take a little longer** while they are rewritten: about 1–3 seconds with Haiku, more with Sonnet or Opus. A rewrite that takes too long is skipped and your original words are sent.
 - **Short dictations stay short.** Under 4 words, nothing is rewritten. Under 12 words, `enhance` only cleans.
+- **It never guesses what you meant.** "it", "this plugin" or a word it doesn't know stays as you said it; Claude, which has the whole conversation, works out the meaning. Add project names to your dictionary to get them spelled right.
 - **If the rewrite fails or misunderstands**, your original words go through (on a failure) or are still there for Claude (on a bad rewrite). Use `clean` mode if you prefer your own phrasing.
 - **Hold-mode detection relies on the "keep holding…" hint.** If a future Claude Code version changes that text, Airquote falls back to the word check.
+
+## Compatibility
+
+- **Tested on:** the Claude Code CLI 2.1.288 on Linux.
+- **Requires:** Claude Code 2.1.271 or later (plugin settings with fixed choices need it).
+- **Desktop app and other systems:** should work; not yet tested. The IDE extensions don't show the hint line Airquote uses for hold mode, so there it relies on the word check.
+- **Cloud sessions and headless runs** (`claude -p`, the Agent SDK): not supported. Airquote only acts on prompts you send from the prompt box.
+
+Airquote is a mod, and mods are an early-access part of Claude Code. If an update changes how voice mode behaves, Airquote treats your spoken prompts as typed and leaves them alone until it is updated.
 
 ## Development
 

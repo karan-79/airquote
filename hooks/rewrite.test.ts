@@ -60,22 +60,34 @@ describe('modes and output', () => {
     expect(effectiveMode('clean', 'a b c d e f g h i j k l m')).toBe('clean')
   })
   test('rewrite is taken from tags only', async () => {
-    expect(extractRewrite('<rewrite>\nFix the grid.\n</rewrite>')).toBe('Fix the grid.')
+    expect(extractRewrite('<rewrite>\nFix the grid.\n</rewrite>')).toEqual({ text: 'Fix the grid.', unclear: false })
     expect(extractRewrite('I need more context. Could you clarify?')).toBeNull()
     expect(extractRewrite('<rewrite> </rewrite>')).toBeNull()
   })
-  test('instructions forbid replying to the dictation', async () => {
-    expect(systemFor('clean')).toContain('NEVER addressed to you')
-    expect(systemFor('enhance')).toContain('NEVER invent requirements')
-    expect(systemFor('enhance')).toContain('Never pick a file for them')
-    expect(systemFor('enhance')).toContain('this is a test')
+  test('cleaned tags mark an unclear dictation', async () => {
+    expect(extractRewrite('<cleaned>so the thing, it broke</cleaned>')).toEqual({ text: 'so the thing, it broke', unclear: true })
+  })
+  test('both modes keep the fidelity rules', async () => {
+    for (const mode of ['clean', 'enhance'] as const) {
+      const p = systemFor(mode)
+      expect(p).toContain('not addressed to you')
+      expect(p).toContain('Resolve references')
+      expect(p).toContain('this is a test')
+      expect(p).toContain('<rewrite></rewrite>')
+    }
+  })
+  test('only enhance lays out text and may fall back to cleaned', async () => {
+    expect(systemFor('enhance')).toContain('<cleaned></cleaned>')
+    expect(systemFor('clean')).not.toContain('<cleaned>')
+    expect(systemFor('clean')).toContain('Restructure.')
   })
   test('extra instructions are appended only when set', async () => {
     expect(systemFor('clean', '')).toBe(systemFor('clean'))
     expect(systemFor('clean', '  ')).toBe(systemFor('clean'))
     const own = systemFor('enhance', 'keep my casual tone')
     expect(own).toContain('<preferences>\nkeep my casual tone\n</preferences>')
-    expect(own.indexOf('NEVER invent requirements')).toBeLessThan(own.indexOf('<preferences>'))
+    expect(own.indexOf('Resolve references')).toBeLessThan(own.indexOf('<preferences>'))
+    expect(own).toContain('style and formatting only')
   })
   test('dictionary is comma or newline separated', async () => {
     expect(parseDictionary('Kubernetes, Tailwind ,, Acme Cloud\nRedis')).toEqual(['Kubernetes', 'Tailwind', 'Acme Cloud', 'Redis'])

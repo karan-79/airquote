@@ -11,6 +11,7 @@ function engine(on: On, reply: string | null) {
   const sent: Sent[] = []
   const asked: string[] = []
   const calls: { model: string; timeoutMs?: number }[] = []
+  const toasts: string[] = []
   let box = ''
 
   on('session.start', ($, e) => ({ cwd: e.cwd, startedAt: 0 }) as never)
@@ -27,6 +28,10 @@ function engine(on: On, reply: string | null) {
     return { text: e.text, context: e.context }
   })
   on('ui.status', () => ({ value: undefined }) as never)
+  on('ui.toast', ($, e) => {
+    toasts.push(String((e as { text?: unknown }).text ?? e))
+    return { value: undefined } as never
+  })
   on('process.run', () => ({ value: { exitCode: 0, stdout: 'src/auth/login.ts\n', stderr: '' } }) as never)
   on('session.messages', () => ({ value: [] }) as never)
   on('model.complete', ($, e) => {
@@ -36,7 +41,7 @@ function engine(on: On, reply: string | null) {
     const value = reply === null ? { isAnswered: false, reason: 'empty-reply', usage } : { isAnswered: true, text: reply, usage }
     return { value } as never
   })
-  return { sent, asked, calls, setBox: (t: string) => (box = t) }
+  return { sent, asked, calls, toasts, setBox: (t: string) => (box = t) }
 }
 
 const start = ($: Engine) => $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: true } as never)
@@ -180,5 +185,22 @@ describe('settings', () => {
     expect(s.sent[0]?.text).toBe(CLEAN)
     expect(s.sent[0]?.context.join('\n')).toContain('dictated with voice mode')
     expect(s.sent[0]?.context.join('\n')).not.toContain(SPEECH)
+  })
+
+  test('an unclear dictation in enhance mode is cleaned only, with a toast', async ($, on) => {
+    const s = engine(on, '<cleaned>so the, the thing it broke when I did the other one</cleaned>')
+    await start($)
+    await submit($, SPEECH)
+    expect(s.sent[0]?.text).toBe('so the, the thing it broke when I did the other one')
+    expect(s.toasts.length).toBe(1)
+    expect(s.toasts[0]).toContain('unclear')
+    expect(s.sent[0]?.context.join('\n')).toContain('before Airquote cleaned it')
+  })
+
+  test('a clear dictation shows no toast', async ($, on) => {
+    const s = engine(on, `<rewrite>${CLEAN}</rewrite>`)
+    await start($)
+    await submit($, SPEECH)
+    expect(s.toasts.length).toBe(0)
   })
 })

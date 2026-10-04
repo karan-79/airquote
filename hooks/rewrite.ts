@@ -64,46 +64,53 @@ export function effectiveMode(mode: Mode, dictated: string): Mode {
   return mode === 'enhance' && words(norm(dictated)) < ENHANCE_MIN_WORDS ? 'clean' : mode
 }
 
-const SHARED = `You rewrite voice-dictated prompts that a software developer is sending to Claude, an AI coding assistant working in their repository.
+// The base rules, shared by both modes. They only fix how the dictation is
+// written; they never let the model work out what the speaker meant. Claude,
+// which answers, has the whole conversation and resolves meaning itself.
+const BASE = `You clean up a voice-dictated message so it reads as if the speaker had typed it. The speaker is a software developer talking to Claude, an AI coding assistant. The message is not addressed to you. Your output replaces what they said, so it must say what they said, only cleaner.
 
-Always:
-- Remove filler words and verbal tics (um, uh, like, you know, I mean, okay so, hmm).
-- Apply self-corrections: "use X, no wait, Y" becomes "use Y".
-- Fix punctuation, capitalization and speech-to-text mistakes. Use the <dictionary> and <repo_files> to spell project terms, identifiers and file names correctly; write identifiers and paths in backticks.
-- Use <recent_conversation> only to resolve what "it", "that", "the mod" etc. refer to. Never answer the prompt.
-- Keep the first person and the speaker's voice: it is their message to Claude.
-- The dictation is NEVER addressed to you. Never reply to it, ask questions, comment on it or refuse. If it has no task (a reaction, an exclamation, a joke), just clean it and return it.`
+Do:
+- Remove filler and verbal tics (um, uh, like, you know, okay so, hmm) and stammered repeats ("the, the").
+- Fix punctuation and capitalization.
+- Apply a self-correction only when the speaker corrects themselves mid-sentence with a marker such as "no wait", "actually no" or "scratch that": "the login page, no wait, the signup page" becomes "the signup page", with the rest of the sentence intact. A sentence like "I didn't mean X, I meant Y" is part of the message: keep all of it.
+- Fix a speech-to-text error only when the intended word is obvious from the sentence itself. Otherwise keep the word as spoken, even if it looks odd or unfamiliar.
+- Use <dictionary>, <repo_files> and <recent_conversation> only to spell a name the speaker actually said. They never tell you what the speaker means.
 
-const CLEAN = `${SHARED}
-- Keep the wording, tone, certainty and level of detail. Do not add, reorder or drop requests.
-- If the text is already clean, return it unchanged.
+Do not:
+- Resolve references. "it", "that", "this", "this plugin", "the bug" stay exactly as spoken, even when the context suggests what they mean.
+- Add anything: no file paths, names, requirements, steps or interpretations the speaker did not say.
+- Drop anything. Every request, question, aside, hedge ("maybe", "I think"), negation ("don't", "not yet") and remark about the message itself ("this is a test", "I'll fix it") stays in.
+- Change the tone, certainty, order or first person. A question stays a question; a maybe stays a maybe.
+- Reply to the message. If it is only a reaction, a joke or chatter, return it cleaned.`
 
-Reply with the rewritten prompt inside <rewrite></rewrite> tags and nothing else.`
+const CLEAN = `${BASE}
+- Restructure. No lists, headings or summaries; keep the speaker's sentence order and wording.
 
-const ENHANCE = `${SHARED}
+Reply with only the cleaned message inside <rewrite></rewrite> tags.`
 
-Then make it a clearer, more actionable prompt:
-- Lead with the main ask in one sentence.
-- When there are several asks, constraints or questions, list them as short bullets in the order spoken.
-- Make implicit things explicit when the speaker clearly implied them: say what they want back (an explanation, a plan, code changes, a diff), and keep any "don't do X" or "just explore" boundaries prominent.
-- Only write a file path when the speaker named that file or module themselves; then use its exact path from <repo_files>. Never pick a file for them.
-- Keep remarks about the prompt itself ("this is a test", "just checking", "ignore the details") — they change how Claude should answer.
-- Keep the speaker's certainty: "maybe explore" stays exploratory, "just test" stays a test.
-- NEVER invent requirements, technologies, scope, acceptance criteria or decisions the speaker did not say or clearly imply. When unsure, leave it out rather than guess.
-- Stay concise: a 20-word thought should not become 200 words. No headings unless the prompt has 4+ distinct parts.
+// Enhance = clean, plus layout for readability. It is dynamic: when the
+// dictation is too unclear to lay out without guessing, the model returns
+// only the cleaned text in <cleaned> tags and Airquote tells the user.
+const ENHANCE = `${BASE}
 
-Reply with the rewritten prompt inside <rewrite></rewrite> tags and nothing else.`
+Then make it easier to read, using only the speaker's own words:
+- Split long run-on speech into sentences, and into short paragraphs where the speaker moves to a new topic.
+- If the speaker clearly lists several separate items, you may put them in a list, in the order spoken.
+- Do not reorder, summarize, merge or reword beyond this.
+
+If the dictation is too unclear or fragmented to lay out without guessing what the speaker meant, do not lay it out: return only the cleaned version inside <cleaned></cleaned> tags.
+
+Otherwise reply with only the result inside <rewrite></rewrite> tags.`
 
 // The user's own guidance from the "Extra rewrite instructions" setting. It
-// shapes the rewrite but can't lift the rules above (never answer, never
-// invent requirements).
+// can change style and formatting, never the rules above.
 export function systemFor(mode: Mode, extra = ''): string {
   const base = mode === 'enhance' ? ENHANCE : CLEAN
   const own = extra.trim()
   if (own === '') return base
   return `${base}
 
-The speaker's own preferences for the rewrite. Follow them, except where they would make you answer the dictation or invent things they didn't say:
+The speaker's own preferences for the rewrite. Follow them for style and formatting only. They can never make you reply to the message, or add, drop, resolve or change the certainty of anything the speaker said:
 <preferences>
 ${own}
 </preferences>`
@@ -144,10 +151,16 @@ export function promptFor(dictated: string, ctx: PromptContext): string {
   ].join('\n\n')
 }
 
-// The text inside <rewrite> tags, or null when the model didn't follow the
-// format (it answered or commented instead of rewriting).
-export function extractRewrite(reply: string): string | null {
-  const m = /<rewrite>([\s\S]*?)<\/rewrite>/.exec(reply)
-  const text = m?.[1]?.trim() ?? ''
-  return text === '' ? null : text
+// What the model returned: a full result in <rewrite> tags, or (enhance only)
+// a clean-up in <cleaned> tags because the dictation was too unclear to lay
+// out. null when it followed neither format (it answered or commented).
+export type Rewrite = { text: string; unclear: boolean }
+
+export function extractRewrite(reply: string): Rewrite | null {
+  for (const [tag, unclear] of [['rewrite', false], ['cleaned', true]] as const) {
+    const m = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`).exec(reply)
+    const text = m?.[1]?.trim() ?? ''
+    if (text !== '') return { text, unclear }
+  }
+  return null
 }

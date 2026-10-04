@@ -163,27 +163,41 @@ export const register: Register = (on, options) => {
     const mode = effectiveMode(settings.mode, spoken)
 
     $.ui.status(mode === 'enhance' ? 'Airquote: enhancing dictation…' : 'Airquote: cleaning dictation…')
-    const ctx = await gatherContext($, settings)
-    const r = await $.model.complete({
-      model: settings.model,
-      system: systemFor(mode, settings.instructions),
-      prompt: promptFor(e.text, ctx),
-      effort: 'low',
-      maxTokens: 3000,
-      timeoutMs: TIMEOUT_MS[settings.model],
-    })
-    $.ui.status(undefined)
+    let reply: string | null = null
+    let failure = ''
+    try {
+      const ctx = await gatherContext($, settings)
+      const r = await $.model.complete({
+        model: settings.model,
+        system: systemFor(mode, settings.instructions),
+        prompt: promptFor(e.text, ctx),
+        effort: 'low',
+        maxTokens: 3000,
+        timeoutMs: TIMEOUT_MS[settings.model],
+      })
+      if (r.isAnswered) reply = r.text
+      else failure = r.reason
+    } catch {
+      failure = 'call refused' // e.g. the model is blocked: still send the voice note
+    } finally {
+      $.ui.status(undefined)
+    }
 
-    const rewritten = r.isAnswered ? extractRewrite(r.text) : null
-    if (rewritten === null || rewritten === e.text.trim()) return passOn(`voice, ${mode}, kept as spoken`)
-    record(`voice, ${mode}`, e.text)
+    const result = reply === null ? null : extractRewrite(reply)
+    if (result === null || result.text === e.text.trim()) {
+      return passOn(`voice, ${mode}, kept as spoken${failure === '' ? '' : ` (${failure})`}`)
+    }
+    if (result.unclear) {
+      $.ui.toast('Airquote: the dictation was unclear, so it was only cleaned up, not restructured.')
+    }
+    record(`voice, ${mode}${result.unclear ? ', unclear: cleaned only' : ''}`, e.text)
 
     // By default Claude also gets the raw transcript, in case the rewrite lost
     // or added something. The attach_transcript setting turns that off.
-    const raw = `Raw voice transcript before Airquote ${mode === 'enhance' ? 'enhanced' : 'cleaned'} it (trust this over the rewrite if they differ in meaning):\n${e.text}`
+    const raw = `Raw voice transcript before Airquote ${mode === 'enhance' && !result.unclear ? 'enhanced' : 'cleaned'} it (trust this over the rewrite if they differ in meaning):\n${e.text}`
     return next({
       ...e,
-      text: rewritten,
+      text: result.text,
       context: [...(e.context ?? []), note, ...(settings.attachTranscript ? [raw] : [])],
     })
   })
