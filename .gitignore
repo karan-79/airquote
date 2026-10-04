@@ -1,0 +1,5 @@
+# Written by Claude Code each time it loads the mod (API types for the editor)
+.claude-plugin/types/
+tsconfig.json
+node_modules/
+.DS_Store

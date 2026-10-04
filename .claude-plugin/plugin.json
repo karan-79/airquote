@@ -1,0 +1,32 @@
+{
+  "name": "saywright",
+  "displayName": "Saywright",
+  "version": "0.1.0",
+  "description": "Turns voice-mode dictation into clean, clear prompts: detects which prompts you spoke, then has Haiku remove filler, apply self-corrections and (optionally) restructure them before Claude reads them.",
+  "author": { "name": "karan-79", "url": "https://github.com/karan-79" },
+  "homepage": "https://github.com/karan-79/saywright",
+  "repository": "https://github.com/karan-79/saywright",
+  "license": "MIT",
+  "keywords": ["voice", "dictation", "speech-to-text", "prompt", "mod"],
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Rewrite mode",
+      "description": "enhance: clean up and restructure into a clearer prompt. clean: fix filler, punctuation and self-corrections only. off: never rewrite (Claude is still told the prompt was spoken).",
+      "options": ["enhance", "clean", "off"],
+      "default": "enhance"
+    },
+    "dictionary": {
+      "type": "string",
+      "title": "Personal dictionary",
+      "description": "Comma-separated terms the rewrite should spell exactly, e.g. project names, people, libraries.",
+      "default": ""
+    },
+    "share_context": {
+      "type": "boolean",
+      "title": "Share repo and conversation context",
+      "description": "Send the repository's file list and the last few messages along with the dictation, so names and references come out right. Off: only the dictation and dictionary are sent.",
+      "default": true
+    }
+  }
+}
