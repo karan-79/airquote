@@ -91,13 +91,6 @@ That call contains:
 
 `git ls-files` is the only command Airquote runs. To recognize prompts you recall, Airquote keeps the prompts you sent in this session, and its cleanups of them, in Claude Code's memory for the session; nothing is saved to disk.
 
-## Compatibility
-
-- **Terminal (the Claude Code CLI):** supported. Tested with Claude Code 2.1.289 on Linux.
-- **Remote Control:** prompts you speak at the terminal are cleaned; prompts sent from your phone are never touched.
-- **Desktop app and IDE extensions:** Airquote stays off. Only the terminal reports keystrokes, so elsewhere it can't tell spoken from typed.
-- **Headless runs** (`claude -p`, the Agent SDK): not supported.
-
 ## Development
 
 - `hooks/register.ts`: the hooks that connect Airquote to Claude Code
