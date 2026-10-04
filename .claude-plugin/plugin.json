@@ -22,23 +22,13 @@
     "mode": {
       "type": "string",
       "title": "Rewrite mode",
-      "description": "enhance: clean up and restructure into a clearer prompt. clean: fix filler, punctuation and self-corrections only. off: never rewrite (Claude is still told the prompt was spoken).",
-      "options": [
-        "enhance",
-        "clean",
-        "off"
-      ],
+      "description": "One of: enhance (clean up and lay out for easier reading), clean (fix filler, punctuation and self-corrections only), off (never rewrite; Claude is still told the prompt was spoken).",
       "default": "enhance"
     },
     "model": {
       "type": "string",
       "title": "Rewrite model",
-      "description": "The Claude model that rewrites your dictation. haiku (default) is fastest. sonnet and opus can follow your extra instructions more closely but are slower (several seconds per prompt) and use more of your plan's usage.",
-      "options": [
-        "haiku",
-        "sonnet",
-        "opus"
-      ],
+      "description": "One of: haiku (default, fastest), sonnet, opus. Sonnet and Opus are slower and use more of your plan's usage.",
       "default": "haiku"
     },
     "dictionary": {

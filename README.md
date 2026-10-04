@@ -79,17 +79,15 @@ When Airquote isn't sure, it treats the prompt as typed. A prompt it recognizes 
 - **Tap mode is detected by elimination.** A few keyboard actions also put text in the box without a key press. Airquote recognizes prompts recalled from this session (Up-arrow, Ctrl+R, rewind) and an accepted suggestion (Tab), and leaves them alone. These can still be taken for speech and cleaned: a prompt from an earlier session recalled with Up-arrow or Ctrl+R, text written with the Ctrl+G editor into an empty box, a Ctrl+S stash coming back, and undo right after clearing the box.
 - **Hold mode relies on the "keep holding…" hint.** If Claude Code changes that text, Airquote falls back to the four-word check.
 
-## Privacy
+## What Airquote reads, sends and changes
 
-Airquote makes one model call per spoken prompt, to the rewrite model you chose, through Claude Code's own connection. It contacts no other service and writes no files.
-
-That call contains:
-
-- your spoken words (not your pastes, code or file mentions)
-- your personal dictionary and extra rewrite instructions, if set
-- while **Share repo and conversation context** is on (the default): your repository's file list from `git ls-files` (up to about 12,000 characters) and the last 4 messages of the conversation (up to 600 characters each)
-
-`git ls-files` is the only command Airquote runs. To recognize prompts you recall, Airquote keeps the prompts you sent in this session, and its cleanups of them, in Claude Code's memory for the session; nothing is saved to disk.
+- **Reads:** your edits in the prompt box and each prompt you send, the hint line under the box, and the conversation's messages (to recognize prompts you recall; they're only sent anywhere as described below).
+- **Sends:** one model call per spoken prompt, to the rewrite model you chose, through Claude Code's own model call (so it goes to Anthropic, like the rest of your session). It contains your spoken words (not your pastes, code or file mentions), your dictionary and extra instructions, and, while **Share repo and conversation context** is on, your repository's file list (up to about 12,000 characters) and the last 4 messages (up to 600 characters each). Airquote contacts nothing else.
+- **Runs:** `git ls-files`, to get your repository's file names so names come out spelled right. It's the only program Airquote runs, and only while **Share repo and conversation context** is on.
+- **Changes:** the text of a spoken prompt, replaced with its cleanup before Claude reads it, plus hidden notes for Claude saying it was spoken (and, by default, your original words). Typed prompts aren't changed.
+- **Sets:** `/airquote enhance|clean|off` saves the **Rewrite mode** setting, the same as changing it in `/config`. Airquote changes no other setting.
+- **Keeps:** the prompts you sent this session and their cleanups, in Claude Code's memory for the session, to recognize prompts you recall. Nothing is written to disk.
+- **Adds:** the `/airquote` command, which shows the mode and what happened to your last 10 prompts, or sets the mode.
 
 ## Development
 
