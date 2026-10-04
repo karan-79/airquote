@@ -5,6 +5,18 @@ export type Mode = 'clean' | 'enhance' | 'off'
 
 export const MODES: readonly Mode[] = ['enhance', 'clean', 'off']
 
+export type RewriteModel = 'haiku' | 'sonnet' | 'opus'
+
+export const MODELS: readonly RewriteModel[] = ['haiku', 'sonnet', 'opus']
+
+export function asModel(value: unknown): RewriteModel {
+  return MODELS.includes(value as RewriteModel) ? (value as RewriteModel) : 'haiku'
+}
+
+// Larger models answer more slowly; give them more time before falling back
+// to the original prompt.
+export const TIMEOUT_MS: Record<RewriteModel, number> = { haiku: 15_000, sonnet: 25_000, opus: 40_000 }
+
 export function asMode(value: unknown): Mode {
   return MODES.includes(value as Mode) ? (value as Mode) : 'enhance'
 }

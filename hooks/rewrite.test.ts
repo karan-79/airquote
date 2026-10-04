@@ -2,6 +2,7 @@ import { describe, expect, test } from 'claude-code/testing'
 
 import {
   asMode,
+  asModel,
   effectiveMode,
   extractRewrite,
   isDictated,
@@ -79,6 +80,11 @@ describe('modes and output', () => {
   test('dictionary is comma or newline separated', async () => {
     expect(parseDictionary('Kubernetes, Tailwind ,, Acme Cloud\nRedis')).toEqual(['Kubernetes', 'Tailwind', 'Acme Cloud', 'Redis'])
     expect(parseDictionary('')).toEqual([])
+  })
+  test('unknown model values fall back to haiku', async () => {
+    expect(asModel('sonnet')).toBe('sonnet')
+    expect(asModel('gpt-4')).toBe('haiku')
+    expect(asModel(undefined)).toBe('haiku')
   })
   test('unknown mode values fall back to enhance', async () => {
     expect(asMode('clean')).toBe('clean')

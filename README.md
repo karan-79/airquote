@@ -2,7 +2,7 @@
 
 **Talk to Claude Code. Airquote makes what you said read like what you meant.**
 
-Claude Code's voice mode (`/voice`) types exactly what you say, including every "um", false start and change of mind. Airquote notices which prompts you spoke and has Claude Haiku clean them up before Claude reads them. Prompts you type are never touched.
+Claude Code's voice mode (`/voice`) types exactly what you say, including every "um", false start and change of mind. Airquote notices which prompts you spoke and has a fast Claude model (Haiku by default) clean them up before Claude reads them. Prompts you type are never touched.
 
 | You say | Claude gets |
 |---|---|
@@ -28,14 +28,15 @@ Airquote works with both. You don't need an API key or another app: it uses the 
 
 ## Configure
 
-Airquote works out of the box. These four settings let you tune it:
+Airquote works out of the box. These five settings let you tune it:
 
 | Setting | Default | What it does |
 |---|---|---|
 | **Rewrite mode** (`mode`) | `enhance` | `enhance`: cleans up your prompt and gives it a clear structure (main ask first, several asks as a list).<br>`clean`: removes filler and fixes punctuation, but keeps your own wording.<br>`off`: no rewrite. Claude is still told the prompt was spoken. |
+| **Rewrite model** (`model`) | `haiku` | The model that rewrites your dictation: `haiku`, `sonnet` or `opus`. Haiku is fastest. Sonnet and Opus can follow your extra instructions more closely, but each spoken prompt takes several seconds longer and uses more of your plan's usage. |
 | **Personal dictionary** (`dictionary`) | empty | Words to always spell exactly, separated by commas. Example: `Kubernetes, Tailwind, Acme Cloud` |
 | **Extra rewrite instructions** (`instructions`) | empty | Your own rules for the rewrite. Example: `Keep my casual tone. Use British English.` |
-| **Share repo and conversation context** (`share_context`) | on | Lets Haiku see your repo's file names and the last few messages, so names and words like "that bug" come out right. Turn it off to share less (see [Privacy](#privacy)). |
+| **Share repo and conversation context** (`share_context`) | on | Lets the rewrite model see your repo's file names and the last few messages, so names and words like "that bug" come out right. Turn it off to share less (see [Privacy](#privacy)). |
 
 ### How to change a setting
 
@@ -45,7 +46,7 @@ Pick whichever way you like. All three change the same settings.
 
 Run `/config`, scroll to the **Airquote** rows, and change a value. It takes effect immediately.
 
-Or run `/plugin configure airquote@airquote` to edit all four settings in one form.
+Or run `/plugin configure airquote@airquote` to edit all settings in one form.
 
 **2. Switch the mode with one command**
 
@@ -60,7 +61,7 @@ Or run `/plugin configure airquote@airquote` to edit all four settings in one fo
 Pass the settings you want to change as JSON. Settings you leave out keep their values.
 
 ```sh
-echo '{"mode": "clean", "dictionary": "Kubernetes, Tailwind"}' \
+echo '{"mode": "clean", "model": "sonnet", "dictionary": "Kubernetes, Tailwind"}' \
   | claude plugin configure airquote@airquote --values-stdin
 ```
 
@@ -86,7 +87,7 @@ When Airquote isn't sure, it treats the prompt as typed and leaves it alone. Eve
 
 ## Privacy
 
-Airquote makes **one model call per spoken prompt**, using Claude Haiku through Claude Code's own connection (your existing Claude login). It contacts no other service, writes no files and keeps no logs.
+Airquote makes **one model call per spoken prompt**, to the rewrite model you chose (Claude Haiku by default), through Claude Code's own connection (your existing Claude login). It contacts no other service, writes no files and keeps no logs.
 
 That call contains:
 
@@ -96,14 +97,14 @@ That call contains:
   - your repository's file list, from `git ls-files` (up to about 12,000 characters)
   - the last 4 messages of the conversation (up to 600 characters each)
 
-`git ls-files` is the only command Airquote runs. Turn **Share repo and conversation context** off and Haiku sees only your prompt, your dictionary and your instructions.
+`git ls-files` is the only command Airquote runs. Turn **Share repo and conversation context** off and the rewrite model sees only your prompt, your dictionary and your instructions.
 
 ## Good to know
 
 - **Tap mode sends right away.** The second tap sends the prompt, so you can't review the rewrite first. In hold mode you can edit the raw text before pressing Enter, but the rewrite still happens on send.
-- **Spoken prompts take 1–3 seconds longer**, while Haiku rewrites them.
+- **Spoken prompts take a little longer** while they are rewritten: about 1–3 seconds with Haiku, more with Sonnet or Opus. A rewrite that takes too long is skipped and your original words are sent.
 - **Short dictations stay short.** Under 4 words, nothing is rewritten. Under 12 words, `enhance` only cleans.
-- **If Haiku fails or misunderstands**, your original words go through (on a failure) or are still there for Claude (on a bad rewrite). Use `clean` mode if you prefer your own phrasing.
+- **If the rewrite fails or misunderstands**, your original words go through (on a failure) or are still there for Claude (on a bad rewrite). Use `clean` mode if you prefer your own phrasing.
 - **Hold-mode detection relies on the "keep holding…" hint.** If a future Claude Code version changes that text, Airquote falls back to the word check.
 
 ## Development
@@ -111,7 +112,7 @@ That call contains:
 The code is in `hooks/`:
 
 - `register.ts`: the hooks that connect Airquote to Claude Code
-- `rewrite.ts`: the detection rules and the instructions sent to Haiku
+- `rewrite.ts`: the detection rules and the instructions sent to the rewrite model
 - `rewrite.test.ts` and `flow.test.ts`: tests for the rules, and end-to-end tests that drive the real hooks (typed, tap and hold prompts, failed rewrites, every setting)
 
 ```sh

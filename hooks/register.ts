@@ -3,7 +3,9 @@ import type { EngineInterface, Register } from 'claude-code'
 import {
   MIN_REWRITE_WORDS,
   MODES,
+  TIMEOUT_MS,
   asMode,
+  asModel,
   effectiveMode,
   extractRewrite,
   isDictated,
@@ -14,9 +16,9 @@ import {
   untypedPart,
   words,
 } from './rewrite'
-import type { Mode, PromptContext } from './rewrite'
+import type { Mode, PromptContext, RewriteModel } from './rewrite'
 
-type Settings = { mode: Mode; dictionary: string[]; instructions: string; shareContext: boolean }
+type Settings = { mode: Mode; model: RewriteModel; dictionary: string[]; instructions: string; shareContext: boolean }
 
 async function gatherContext($: EngineInterface, settings: Settings): Promise<PromptContext> {
   if (!settings.shareContext) return { dictionary: settings.dictionary, files: [], recent: [] }
@@ -50,6 +52,7 @@ function record(verdict: string, sent: string): void {
 export const register: Register = (on, options) => {
   const settings: Settings = {
     mode: asMode(options.mode),
+    model: asModel(options.model),
     dictionary: parseDictionary(String(options.dictionary ?? '')),
     instructions: String(options.instructions ?? ''),
     shareContext: options.share_context !== false,
@@ -86,7 +89,7 @@ export const register: Register = (on, options) => {
     const wanted = e.args.trim().toLowerCase()
     if (wanted === '') {
       const recent = decisions.length > 0 ? decisions.join('\n') : '(no prompts since the last reload)'
-      return { text: `Airquote mode: ${settings.mode}\n\nRecent prompts:\n${recent}` }
+      return { text: `Airquote mode: ${settings.mode} (model: ${settings.model})\n\nRecent prompts:\n${recent}` }
     }
     if (!MODES.includes(wanted as Mode)) {
       return { text: `Unknown mode "${wanted}". Use one of: ${MODES.join(', ')}` }
@@ -154,12 +157,12 @@ export const register: Register = (on, options) => {
     $.ui.status(mode === 'enhance' ? 'Airquote: enhancing dictation…' : 'Airquote: cleaning dictation…')
     const ctx = await gatherContext($, settings)
     const r = await $.model.complete({
-      model: 'haiku',
+      model: settings.model,
       system: systemFor(mode, settings.instructions),
       prompt: promptFor(e.text, ctx),
       effort: 'low',
       maxTokens: 3000,
-      timeoutMs: 15000,
+      timeoutMs: TIMEOUT_MS[settings.model],
     })
     $.ui.status(undefined)
 

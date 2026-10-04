@@ -10,6 +10,7 @@ type Sent = { text: string; context: readonly string[] }
 function engine(on: On, reply: string | null) {
   const sent: Sent[] = []
   const asked: string[] = []
+  const calls: { model: string; timeoutMs?: number }[] = []
   let box = ''
 
   on('session.start', ($, e) => ({ cwd: e.cwd, startedAt: 0 }) as never)
@@ -30,11 +31,12 @@ function engine(on: On, reply: string | null) {
   on('session.messages', () => ({ value: [] }) as never)
   on('model.complete', ($, e) => {
     asked.push(`${e.system ?? ''}\n${e.prompt}`)
+    calls.push({ model: e.model, timeoutMs: e.timeoutMs })
     const usage = { input_tokens: 1, output_tokens: 1, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
     const value = reply === null ? { isAnswered: false, reason: 'empty-reply', usage } : { isAnswered: true, text: reply, usage }
     return { value } as never
   })
-  return { sent, asked, setBox: (t: string) => (box = t) }
+  return { sent, asked, calls, setBox: (t: string) => (box = t) }
 }
 
 const start = ($: Engine) => $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: true } as never)
@@ -155,5 +157,19 @@ describe('settings', () => {
     await start($)
     await submit($, SPEECH)
     expect(s.asked[0]).toContain('write in British English')
+  })
+
+  test('haiku is the default model', async ($, on) => {
+    const s = engine(on, `<rewrite>${CLEAN}</rewrite>`)
+    await start($)
+    await submit($, SPEECH)
+    expect(s.calls[0]).toEqual({ model: 'haiku', timeoutMs: 15000 })
+  })
+
+  test('a chosen model and its longer time limit reach the call', { options: { model: 'opus' } }, async ($, on) => {
+    const s = engine(on, `<rewrite>${CLEAN}</rewrite>`)
+    await start($)
+    await submit($, SPEECH)
+    expect(s.calls[0]).toEqual({ model: 'opus', timeoutMs: 40000 })
   })
 })

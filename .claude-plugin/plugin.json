@@ -29,6 +29,17 @@
       ],
       "default": "enhance"
     },
+    "model": {
+      "type": "string",
+      "title": "Rewrite model",
+      "description": "The Claude model that rewrites your dictation. haiku (default) is fastest. sonnet and opus can follow your extra instructions more closely but are slower (several seconds per prompt) and use more of your plan's usage.",
+      "options": [
+        "haiku",
+        "sonnet",
+        "opus"
+      ],
+      "default": "haiku"
+    },
     "dictionary": {
       "type": "string",
       "title": "Personal dictionary",
