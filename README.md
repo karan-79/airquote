@@ -1,79 +1,122 @@
 # Airquote
 
-Speak your prompts to Claude Code and have them arrive clean.
+**Talk to Claude Code. Airquote makes what you said read like what you meant.**
 
-Airquote is a Claude Code plugin (a [mod](https://code.claude.com/docs/en/plugins/mods/overview)) for the built-in voice mode (`/voice`). It works out which prompts you dictated and which you typed. A dictated prompt goes to Claude Haiku first, which removes filler words ("um", "uh", "you know"), applies your self-corrections ("use X, no wait, Y" becomes "use Y"), fixes punctuation, and spells project names and files correctly. In **enhance** mode it also restructures the prompt so the main ask comes first and several asks become a short list. Typed prompts are never touched.
+Claude Code's voice mode (`/voice`) types exactly what you say, including every "um", false start and change of mind. Airquote notices which prompts you spoke and has Claude Haiku clean them up before Claude reads them. Prompts you type are never touched.
 
-Claude still receives your raw transcript as hidden context, so a rewrite can't silently lose what you said.
+| You say | Claude gets |
+|---|---|
+| *"um so can you uh check why the, the login page is slow, no wait, the signup page, on mobile"* | Can you check why the signup page is slow on mobile? |
+
+Your original words are still passed to Claude as hidden context, so a rewrite can never lose what you said.
 
 ## Install
+
+Run these two commands inside Claude Code:
 
 ```
 /plugin marketplace add karan-79/airquote
 /plugin install airquote@airquote
 ```
 
-Then turn on voice mode with `/voice hold` or `/voice tap` and dictate as usual.
+Then turn on voice mode and talk as usual:
 
-## How it tells voice from typing
+- `/voice hold`: hold the space bar while you speak, release, and press Enter to send.
+- `/voice tap`: tap space to start, tap again to stop and send.
 
-Voice mode doesn't tell plugins where text came from, so Airquote watches what happens in the prompt box:
+Airquote works with both. You don't need an API key or another app: it uses the voice mode and Claude login you already have.
 
-| You dictate with | Detected by |
+## Configure
+
+Airquote works out of the box. These four settings let you tune it:
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Rewrite mode** (`mode`) | `enhance` | `enhance`: cleans up your prompt and gives it a clear structure (main ask first, several asks as a list).<br>`clean`: removes filler and fixes punctuation, but keeps your own wording.<br>`off`: no rewrite. Claude is still told the prompt was spoken. |
+| **Personal dictionary** (`dictionary`) | empty | Words to always spell exactly, separated by commas. Example: `Kubernetes, Tailwind, Acme Cloud` |
+| **Extra rewrite instructions** (`instructions`) | empty | Your own rules for the rewrite. Example: `Keep my casual tone. Use British English.` |
+| **Share repo and conversation context** (`share_context`) | on | Lets Haiku see your repo's file names and the last few messages, so names and words like "that bug" come out right. Turn it off to share less (see [Privacy](#privacy)). |
+
+### How to change a setting
+
+Pick whichever way you like. All three change the same settings.
+
+**1. In Claude Code (easiest)**
+
+Run `/config`, scroll to the **Airquote** rows, and change a value. It takes effect immediately.
+
+Or run `/plugin configure airquote@airquote` to edit all four settings in one form.
+
+**2. Switch the mode with one command**
+
+```
+/airquote enhance
+/airquote clean
+/airquote off
+```
+
+**3. From your shell**
+
+Pass the settings you want to change as JSON. Settings you leave out keep their values.
+
+```sh
+echo '{"mode": "clean", "dictionary": "Kubernetes, Tailwind"}' \
+  | claude plugin configure airquote@airquote --values-stdin
+```
+
+Write every value as a string, including on/off: `"share_context": "false"`. Restart Claude Code afterwards.
+
+To see your current values from the shell, run `claude plugin configure airquote@airquote`.
+
+### Check what Airquote did
+
+Run `/airquote` in Claude Code. It shows your current mode and what happened to your last 10 prompts, for example `typed`, `voice, enhance` or `voice, kept as spoken`.
+
+## How Airquote knows you spoke
+
+Voice mode doesn't tell plugins where text came from, so Airquote watches the prompt box:
+
+| You dictate with | How Airquote knows |
 |---|---|
-| Hold space (`/voice hold`) | The hint line under the prompt shows "keep holding…" while recording |
-| Tap space (`/voice tap`) | Text arrives in an empty box without a single keystroke |
-| Dictation mixed with typing | Four or more words arrive that you didn't type or paste |
+| Hold space (`/voice hold`) | The hint under the prompt box says "keep holding…" while you record. |
+| Tap space (`/voice tap`) | The text appears in an empty box without a single key press. |
+| Voice and typing mixed | Four or more words appear that you didn't type or paste. |
 
-Prompts it can't place, such as one you were typing while the plugin reloaded, are treated as typed and left alone.
+When Airquote isn't sure, it treats the prompt as typed and leaves it alone. Every prompt it recognizes as spoken carries a hidden note telling Claude it was dictated, even when nothing is rewritten.
 
-Every prompt detected as voice carries a hidden note telling Claude it was spoken, even when it isn't rewritten.
+## Privacy
 
-## Modes and settings
-
-Set these in `/config` (the Airquote rows), or switch the mode with a command:
-
-- `/airquote` shows the current mode and what happened to your last few prompts.
-- `/airquote enhance` cleans up and restructures. This is the default. Dictations under 12 words are only cleaned, so short remarks don't get padded.
-- `/airquote clean` fixes filler, punctuation and self-corrections and keeps your wording.
-- `/airquote off` never rewrites, but Claude is still told the prompt was spoken.
-
-The other settings:
-
-- **Personal dictionary**: comma-separated terms to spell exactly, such as project names, people and libraries.
-- **Extra rewrite instructions**: your own guidance for the rewrite, such as "keep my casual tone", "always end with: ask before editing files" or "write in British English". It shapes how prompts are rewritten but can't make Haiku answer your prompt or add requests you didn't make.
-- **Share repo and conversation context**: on by default. See below.
-
-## What it sends, and where
-
-Airquote makes one model call per dictated prompt, through Claude Code's own model client: your existing Claude login, model `haiku`. It contacts no other service, stores no files and keeps no logs on disk.
+Airquote makes **one model call per spoken prompt**, using Claude Haiku through Claude Code's own connection (your existing Claude login). It contacts no other service, writes no files and keeps no logs.
 
 That call contains:
 
-- the dictated prompt
-- your personal dictionary and extra rewrite instructions
-- if **Share repo and conversation context** is on (the default):
-  - the file list of the current git repository (`git ls-files`, up to about 12,000 characters)
-  - the text of the last 4 messages in the conversation, each cut to 600 characters
+- the prompt you spoke
+- your personal dictionary and extra rewrite instructions, if set
+- only while **Share repo and conversation context** is on (the default):
+  - your repository's file list, from `git ls-files` (up to about 12,000 characters)
+  - the last 4 messages of the conversation (up to 600 characters each)
 
-The repo file list and recent messages help Haiku spell file names and resolve words like "that" or "the bug". Turn the setting off to send only the dictation, dictionary and instructions.
+`git ls-files` is the only command Airquote runs. Turn **Share repo and conversation context** off and Haiku sees only your prompt, your dictionary and your instructions.
 
-To get the file list, Airquote runs `git ls-files` in the session's working directory. That is the only command it runs.
+## Good to know
 
-## Limits
-
-- **Rewrites happen as the prompt is sent.** In tap mode, the second tap sends right away. In hold mode you can review the raw transcript before pressing Enter, but not the rewrite.
-- **Rewriting adds about 1–3 seconds** to dictated prompts.
-- **Enhance mode can still misjudge your intent.** That's why Claude also gets the raw transcript. Use `clean` if you prefer your own wording.
-- **Detection relies on what Claude Code's voice mode currently shows.** If a future version changes the hint text, hold mode falls back to the word-count check.
+- **Tap mode sends right away.** The second tap sends the prompt, so you can't review the rewrite first. In hold mode you can edit the raw text before pressing Enter, but the rewrite still happens on send.
+- **Spoken prompts take 1–3 seconds longer**, while Haiku rewrites them.
+- **Short dictations stay short.** Under 4 words, nothing is rewritten. Under 12 words, `enhance` only cleans.
+- **If Haiku fails or misunderstands**, your original words go through (on a failure) or are still there for Claude (on a bad rewrite). Use `clean` mode if you prefer your own phrasing.
+- **Hold-mode detection relies on the "keep holding…" hint.** If a future Claude Code version changes that text, Airquote falls back to the word check.
 
 ## Development
 
-The plugin's code is in `hooks/`: `register.ts` (the hooks) and `rewrite.ts` (pure logic and prompts). `rewrite.test.ts` tests the logic, and `flow.test.ts` drives the real hooks end to end with the engine stubbed (typed vs. tap vs. hold, failed rewrites, every setting).
+The code is in `hooks/`:
 
-```
-claude plugin validate .
-claude plugin test .
+- `register.ts`: the hooks that connect Airquote to Claude Code
+- `rewrite.ts`: the detection rules and the instructions sent to Haiku
+- `rewrite.test.ts` and `flow.test.ts`: tests for the rules, and end-to-end tests that drive the real hooks (typed, tap and hold prompts, failed rewrites, every setting)
+
+```sh
+claude plugin validate .   # check the plugin
+claude plugin test .       # run the tests
 claude --plugin-dir .      # try it in a session
 ```
 
