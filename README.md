@@ -1,23 +1,23 @@
-# Saywright
+# Airquote
 
 Speak your prompts to Claude Code and have them arrive clean.
 
-Saywright is a Claude Code plugin (a [mod](https://code.claude.com/docs/en/plugins/mods/overview)) for the built-in voice mode (`/voice`). It works out which prompts you dictated and which you typed. A dictated prompt goes to Claude Haiku first, which removes filler words ("um", "uh", "you know"), applies your self-corrections ("use X, no wait, Y" becomes "use Y"), fixes punctuation, and spells project names and files correctly. In **enhance** mode it also restructures the prompt so the main ask comes first and several asks become a short list. Typed prompts are never touched.
+Airquote is a Claude Code plugin (a [mod](https://code.claude.com/docs/en/plugins/mods/overview)) for the built-in voice mode (`/voice`). It works out which prompts you dictated and which you typed. A dictated prompt goes to Claude Haiku first, which removes filler words ("um", "uh", "you know"), applies your self-corrections ("use X, no wait, Y" becomes "use Y"), fixes punctuation, and spells project names and files correctly. In **enhance** mode it also restructures the prompt so the main ask comes first and several asks become a short list. Typed prompts are never touched.
 
 Claude still receives your raw transcript as hidden context, so a rewrite can't silently lose what you said.
 
 ## Install
 
 ```
-/plugin marketplace add karan-79/saywright
-/plugin install saywright@saywright
+/plugin marketplace add karan-79/airquote
+/plugin install airquote@airquote
 ```
 
 Then turn on voice mode with `/voice hold` or `/voice tap` and dictate as usual.
 
 ## How it tells voice from typing
 
-Voice mode doesn't tell plugins where text came from, so Saywright watches what happens in the prompt box:
+Voice mode doesn't tell plugins where text came from, so Airquote watches what happens in the prompt box:
 
 | You dictate with | Detected by |
 |---|---|
@@ -31,12 +31,12 @@ Every prompt detected as voice carries a hidden note telling Claude it was spoke
 
 ## Modes and settings
 
-Set these in `/config` (the Saywright rows), or switch the mode with a command:
+Set these in `/config` (the Airquote rows), or switch the mode with a command:
 
-- `/saywright` shows the current mode and what happened to your last few prompts.
-- `/saywright enhance` cleans up and restructures. This is the default. Dictations under 12 words are only cleaned, so short remarks don't get padded.
-- `/saywright clean` fixes filler, punctuation and self-corrections and keeps your wording.
-- `/saywright off` never rewrites, but Claude is still told the prompt was spoken.
+- `/airquote` shows the current mode and what happened to your last few prompts.
+- `/airquote enhance` cleans up and restructures. This is the default. Dictations under 12 words are only cleaned, so short remarks don't get padded.
+- `/airquote clean` fixes filler, punctuation and self-corrections and keeps your wording.
+- `/airquote off` never rewrites, but Claude is still told the prompt was spoken.
 
 The other settings:
 
@@ -46,7 +46,7 @@ The other settings:
 
 ## What it sends, and where
 
-Saywright makes one model call per dictated prompt, through Claude Code's own model client: your existing Claude login, model `haiku`. It contacts no other service, stores no files and keeps no logs on disk.
+Airquote makes one model call per dictated prompt, through Claude Code's own model client: your existing Claude login, model `haiku`. It contacts no other service, stores no files and keeps no logs on disk.
 
 That call contains:
 
@@ -58,7 +58,7 @@ That call contains:
 
 The repo file list and recent messages help Haiku spell file names and resolve words like "that" or "the bug". Turn the setting off to send only the dictation, dictionary and instructions.
 
-To get the file list, Saywright runs `git ls-files` in the session's working directory. That is the only command it runs.
+To get the file list, Airquote runs `git ls-files` in the session's working directory. That is the only command it runs.
 
 ## Limits
 

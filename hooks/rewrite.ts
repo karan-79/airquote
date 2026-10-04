@@ -1,4 +1,4 @@
-// Pure logic for Saywright: deciding which prompts were dictated and building
+// Pure logic for Airquote: deciding which prompts were dictated and building
 // the rewrite request. register.ts wires it to Claude Code's hooks.
 
 export type Mode = 'clean' | 'enhance' | 'off'

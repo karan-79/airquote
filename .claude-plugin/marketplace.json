@@ -1,8 +1,8 @@
 {
-  "name": "saywright",
-  "description": "Saywright: voice dictation cleanup for Claude Code",
+  "name": "airquote",
+  "description": "Airquote: voice dictation cleanup for Claude Code",
   "owner": { "name": "karan-79" },
   "plugins": [
-    { "name": "saywright", "source": "./", "description": "Clean, clear prompts from voice-mode dictation" }
+    { "name": "airquote", "source": "./", "description": "Clean, clear prompts from voice-mode dictation" }
   ]
 }

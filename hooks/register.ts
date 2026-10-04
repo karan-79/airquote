@@ -38,7 +38,7 @@ async function gatherContext($: EngineInterface, settings: Settings): Promise<Pr
   return { dictionary: settings.dictionary, files, recent }
 }
 
-// What happened to recent prompts, for `/saywright` to show. In memory only.
+// What happened to recent prompts, for `/airquote` to show. In memory only.
 const decisions: string[] = []
 
 function record(verdict: string, sent: string): void {
@@ -74,26 +74,26 @@ export const register: Register = (on, options) => {
       // no prompt box (headless): stay unknown
     }
     await $.command.register({
-      name: 'saywright',
-      description: 'Show Saywright status, or set the rewrite mode',
+      name: 'airquote',
+      description: 'Show Airquote status, or set the rewrite mode',
       argumentHint: '[enhance|clean|off]',
     })
     return next(e)
   })
 
-  // /saywright shows the mode and recent decisions; /saywright <mode> sets it.
-  on('command.run', { command: 'saywright' }, async ($, e) => {
+  // /airquote shows the mode and recent decisions; /airquote <mode> sets it.
+  on('command.run', { command: 'airquote' }, async ($, e) => {
     const wanted = e.args.trim().toLowerCase()
     if (wanted === '') {
       const recent = decisions.length > 0 ? decisions.join('\n') : '(no prompts since the last reload)'
-      return { text: `Saywright mode: ${settings.mode}\n\nRecent prompts:\n${recent}` }
+      return { text: `Airquote mode: ${settings.mode}\n\nRecent prompts:\n${recent}` }
     }
     if (!MODES.includes(wanted as Mode)) {
       return { text: `Unknown mode "${wanted}". Use one of: ${MODES.join(', ')}` }
     }
     // Saved like a /config change; the plugin reloads with the new value.
-    const r = await $.config.set({ key: 'saywright.mode', value: wanted })
-    return { text: r.deny === undefined ? `Saywright mode set to ${wanted}.` : `Couldn't set the mode: ${r.deny}` }
+    const r = await $.config.set({ key: 'airquote.mode', value: wanted })
+    return { text: r.deny === undefined ? `Airquote mode set to ${wanted}.` : `Couldn't set the mode: ${r.deny}` }
   })
 
   on('ui.render', { component: 'PromptHint' }, async ($, e, next) => {
@@ -151,7 +151,7 @@ export const register: Register = (on, options) => {
     if (words(spoken) < MIN_REWRITE_WORDS) return passOn('voice, too short to rewrite')
     const mode = effectiveMode(settings.mode, spoken)
 
-    $.ui.status(mode === 'enhance' ? 'Saywright: enhancing dictation…' : 'Saywright: cleaning dictation…')
+    $.ui.status(mode === 'enhance' ? 'Airquote: enhancing dictation…' : 'Airquote: cleaning dictation…')
     const ctx = await gatherContext($, settings)
     const r = await $.model.complete({
       model: 'haiku',
@@ -174,7 +174,7 @@ export const register: Register = (on, options) => {
       context: [
         ...(e.context ?? []),
         note,
-        `Raw voice transcript before Saywright ${mode === 'enhance' ? 'enhanced' : 'cleaned'} it (trust this over the rewrite if they differ in meaning):\n${e.text}`,
+        `Raw voice transcript before Airquote ${mode === 'enhance' ? 'enhanced' : 'cleaned'} it (trust this over the rewrite if they differ in meaning):\n${e.text}`,
       ],
     })
   })
