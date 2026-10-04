@@ -172,4 +172,13 @@ describe('settings', () => {
     await submit($, SPEECH)
     expect(s.calls[0]).toEqual({ model: 'opus', timeoutMs: 40000 })
   })
+
+  test('attach_transcript off sends the rewrite and voice note, not the raw words', { options: { attach_transcript: false } }, async ($, on) => {
+    const s = engine(on, `<rewrite>${CLEAN}</rewrite>`)
+    await start($)
+    await submit($, SPEECH)
+    expect(s.sent[0]?.text).toBe(CLEAN)
+    expect(s.sent[0]?.context.join('\n')).toContain('dictated with voice mode')
+    expect(s.sent[0]?.context.join('\n')).not.toContain(SPEECH)
+  })
 })

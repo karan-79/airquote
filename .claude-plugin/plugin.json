@@ -52,6 +52,12 @@
       "description": "Your own guidance for how prompts should be rewritten, e.g. \"keep my casual tone\", \"always end with: ask before editing files\", \"write in British English\". Applied in clean and enhance modes.",
       "default": ""
     },
+    "attach_transcript": {
+      "type": "boolean",
+      "title": "Attach original transcript",
+      "description": "When a prompt is rewritten, also give Claude your exact dictated words as hidden context, so a rewrite can't lose what you said. Off: Claude sees only the rewrite (and the note that it was spoken).",
+      "default": true
+    },
     "share_context": {
       "type": "boolean",
       "title": "Share repo and conversation context",

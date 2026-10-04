@@ -18,7 +18,14 @@ import {
 } from './rewrite'
 import type { Mode, PromptContext, RewriteModel } from './rewrite'
 
-type Settings = { mode: Mode; model: RewriteModel; dictionary: string[]; instructions: string; shareContext: boolean }
+type Settings = {
+  mode: Mode
+  model: RewriteModel
+  dictionary: string[]
+  instructions: string
+  attachTranscript: boolean
+  shareContext: boolean
+}
 
 async function gatherContext($: EngineInterface, settings: Settings): Promise<PromptContext> {
   if (!settings.shareContext) return { dictionary: settings.dictionary, files: [], recent: [] }
@@ -55,6 +62,7 @@ export const register: Register = (on, options) => {
     model: asModel(options.model),
     dictionary: parseDictionary(String(options.dictionary ?? '')),
     instructions: String(options.instructions ?? ''),
+    attachTranscript: options.attach_transcript !== false,
     shareContext: options.share_context !== false,
   }
 
@@ -170,15 +178,13 @@ export const register: Register = (on, options) => {
     if (rewritten === null || rewritten === e.text.trim()) return passOn(`voice, ${mode}, kept as spoken`)
     record(`voice, ${mode}`, e.text)
 
+    // By default Claude also gets the raw transcript, in case the rewrite lost
+    // or added something. The attach_transcript setting turns that off.
+    const raw = `Raw voice transcript before Airquote ${mode === 'enhance' ? 'enhanced' : 'cleaned'} it (trust this over the rewrite if they differ in meaning):\n${e.text}`
     return next({
       ...e,
       text: rewritten,
-      // Claude still sees the raw transcript, in case the rewrite lost or added something.
-      context: [
-        ...(e.context ?? []),
-        note,
-        `Raw voice transcript before Airquote ${mode === 'enhance' ? 'enhanced' : 'cleaned'} it (trust this over the rewrite if they differ in meaning):\n${e.text}`,
-      ],
+      context: [...(e.context ?? []), note, ...(settings.attachTranscript ? [raw] : [])],
     })
   })
 }

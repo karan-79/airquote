@@ -8,7 +8,7 @@ Claude Code's voice mode (`/voice`) types exactly what you say, including every 
 |---|---|
 | *"um so can you uh check why the, the login page is slow, no wait, the signup page, on mobile"* | Can you check why the signup page is slow on mobile? |
 
-Your original words are still passed to Claude as hidden context, so a rewrite can never lose what you said.
+By default, your original words are also passed to Claude as hidden context, so a rewrite can never lose what you said.
 
 ## Install
 
@@ -28,7 +28,7 @@ Airquote works with both. You don't need an API key or another app: it uses the 
 
 ## Configure
 
-Airquote works out of the box. These five settings let you tune it:
+Airquote works out of the box. These six settings let you tune it:
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -36,6 +36,7 @@ Airquote works out of the box. These five settings let you tune it:
 | **Rewrite model** (`model`) | `haiku` | The model that rewrites your dictation: `haiku`, `sonnet` or `opus`. Haiku is fastest. Sonnet and Opus can follow your extra instructions more closely, but each spoken prompt takes several seconds longer and uses more of your plan's usage. |
 | **Personal dictionary** (`dictionary`) | empty | Words to always spell exactly, separated by commas. Example: `Kubernetes, Tailwind, Acme Cloud` |
 | **Extra rewrite instructions** (`instructions`) | empty | Your own rules for the rewrite. Example: `Keep my casual tone. Use British English.` |
+| **Attach original transcript** (`attach_transcript`) | on | When a prompt is rewritten, Claude also gets your exact dictated words as hidden context, so a bad rewrite can't lose your meaning. Turn it off and Claude sees only the rewrite. |
 | **Share repo and conversation context** (`share_context`) | on | Lets the rewrite model see your repo's file names and the last few messages, so names and words like "that bug" come out right. Turn it off to share less (see [Privacy](#privacy)). |
 
 ### How to change a setting
