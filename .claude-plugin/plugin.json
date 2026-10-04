@@ -10,6 +10,7 @@
   "homepage": "https://github.com/karan-79/airquote",
   "repository": "https://github.com/karan-79/airquote",
   "license": "MIT",
+  "types": "./types/airquote.d.ts",
   "keywords": [
     "voice",
     "dictation",
@@ -55,7 +56,7 @@
     "attach_transcript": {
       "type": "boolean",
       "title": "Attach original transcript",
-      "description": "When a prompt is rewritten, also give Claude your exact dictated words as hidden context, so a rewrite can't lose what you said. Off: Claude sees only the rewrite (and the note that it was spoken).",
+      "description": "When a prompt is rewritten, also give Claude your exact dictated words as hidden context, so it can check the rewrite against what you said. Off: Claude sees only the rewrite (and the note that it was spoken).",
       "default": true
     },
     "share_context": {

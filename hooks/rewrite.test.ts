@@ -3,14 +3,21 @@ import { describe, expect, test } from 'claude-code/testing'
 import {
   asMode,
   asModel,
+  edges,
   effectiveMode,
   extractRewrite,
+  inserted,
   isDictated,
   isVoiceHint,
   parseDictionary,
+  pasteHidden,
   promptFor,
+  protect,
+  restore,
   systemFor,
   untypedPart,
+  wasSentBefore,
+  withoutKept,
   words,
 } from './rewrite'
 
@@ -123,5 +130,86 @@ describe('voice signal', () => {
   })
   test('warm-up spaces from holding space are not typed words', async () => {
     expect(words(untypedPart('   ', 'Hello can you hear me'))).toBe(5)
+  })
+})
+
+describe('kept blocks', () => {
+  const paste = '<pasted_content id="x">uh line one\nline two</pasted_content id="x">'
+  const reminder = '<system-reminder>\nhost note\n</system-reminder>'
+
+  test('pastes and reminders are swapped for numbered markers', async () => {
+    const p = protect(`${reminder}\nlook at ${paste} please`)
+    expect(p.spoken).toBe('[kept block 1]\nlook at [kept block 2] please')
+    expect(p.blocks).toEqual([reminder, paste])
+  })
+  test('a prompt with no blocks is unchanged', async () => {
+    expect(protect('just words')).toEqual({ spoken: 'just words', blocks: [] })
+  })
+  test('restore puts each block back verbatim', async () => {
+    expect(restore('Look at [kept block 1], please.', [paste])).toBe(`Look at ${paste}, please.`)
+  })
+  test('restore refuses a lost, repeated or invented marker', async () => {
+    expect(restore('Look at it.', [paste])).toBe(null)
+    expect(restore('[kept block 1] [kept block 1]', [paste])).toBe(null)
+    expect(restore('[kept block 2]', [paste])).toBe(null)
+  })
+  test('detection text leaves the blocks out', async () => {
+    expect(words(withoutKept(paste))).toBe(0)
+    expect(isDictated('', withoutKept(`${paste} ok`))).toBe(false)
+  })
+})
+
+describe('cli edge cases', () => {
+  test('code, file mentions and placeholders are kept; emails are not', async () => {
+    const p = protect('see `a()` and @src/x.ts in [Image #1] then ```\nb\n``` mail me@x.io')
+    expect(p.blocks).toEqual(['`a()`', '@src/x.ts', '[Image #1]', '```\nb\n```'])
+    expect(p.spoken).toContain('me@x.io')
+  })
+  test('inserted finds what landed between two drafts', async () => {
+    expect(inserted('so ', 'so um check this')).toBe('um check this')
+    expect(inserted('fix it', 'fix the login bug it')).toBe('the login bug ')
+    expect(inserted('same', 'same')).toBe('')
+  })
+  test('text heard between edits counts toward dictation', async () => {
+    expect(isDictated('so check this ok', 'so check this ok', 'check this out now')).toBe(true)
+    expect(isDictated('so check this ok', 'so check this ok', 'check')).toBe(false)
+  })
+  test('a collapsed paste without tags hides what was said', async () => {
+    expect(pasteHidden('[Pasted text #1 +40 lines] ', 'line one\nline two')).toBe(true)
+    expect(pasteHidden('[Pasted text #1 +40 lines] ', '<pasted_content id="1">x</pasted_content>')).toBe(false)
+    expect(pasteHidden('', 'anything')).toBe(false)
+  })
+})
+
+describe('wasSentBefore', () => {
+  const sent = ['fix the login bug please']
+  test('matches a sent prompt, ignoring spacing and kept blocks', async () => {
+    expect(wasSentBefore('  fix the   login bug please ', sent, '', [])).toBe(true)
+  })
+  test('matches the shown suggestion', async () => {
+    expect(wasSentBefore('run the tests', sent, 'run the tests', [])).toBe(true)
+  })
+  test('matches the start of a transcript message, from 4 words', async () => {
+    expect(wasSentBefore('check why it fails', sent, '', ['check why it fails\nnote'])).toBe(true)
+    expect(wasSentBefore('check why', sent, '', ['check why it fails'])).toBe(false)
+  })
+  test('a new prompt is not matched', async () => {
+    expect(wasSentBefore('um check the signup page', sent, 'run the tests', ['fix it'])).toBe(false)
+  })
+})
+
+describe('edges', () => {
+  test('kept blocks at the start and end are split off with their spacing', async () => {
+    expect(edges('\n\n[kept block 1]\n\n um say this [kept block 2] ok [kept block 3]\n')).toEqual({
+      head: '\n\n[kept block 1]\n\n ',
+      body: 'um say this [kept block 2] ok',
+      tail: ' [kept block 3]\n',
+    })
+  })
+  test('no kept blocks: all body', async () => {
+    expect(edges('just speech')).toEqual({ head: '', body: 'just speech', tail: '' })
+  })
+  test('restore refuses markers out of order', async () => {
+    expect(restore('[kept block 2] [kept block 1]', ['a', 'b'])).toBe(null)
   })
 })
