@@ -26,6 +26,8 @@ Then turn on voice mode and talk as usual:
 
 Airquote works with both. You don't need an API key or another app: it uses the voice mode and Claude login you already have.
 
+To get a newer version later, run `/plugin update airquote@airquote`.
+
 ## Configure
 
 | Setting | Default | What it does |
@@ -87,7 +89,7 @@ That call contains:
 - your personal dictionary and extra rewrite instructions, if set
 - while **Share repo and conversation context** is on (the default): your repository's file list from `git ls-files` (up to about 12,000 characters) and the last 4 messages of the conversation (up to 600 characters each)
 
-`git ls-files` is the only command Airquote runs.
+`git ls-files` is the only command Airquote runs. To recognize prompts you recall, Airquote keeps the prompts you sent in this session, and its cleanups of them, in Claude Code's memory for the session; nothing is saved to disk.
 
 ## Compatibility
 
