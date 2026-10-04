@@ -41,6 +41,7 @@ Set these in `/config` (the Saywright rows), or switch the mode with a command:
 The other settings:
 
 - **Personal dictionary**: comma-separated terms to spell exactly, such as project names, people and libraries.
+- **Extra rewrite instructions**: your own guidance for the rewrite, such as "keep my casual tone", "always end with: ask before editing files" or "write in British English". It shapes how prompts are rewritten but can't make Haiku answer your prompt or add requests you didn't make.
 - **Share repo and conversation context**: on by default. See below.
 
 ## What it sends, and where
@@ -50,12 +51,12 @@ Saywright makes one model call per dictated prompt, through Claude Code's own mo
 That call contains:
 
 - the dictated prompt
-- your personal dictionary
+- your personal dictionary and extra rewrite instructions
 - if **Share repo and conversation context** is on (the default):
   - the file list of the current git repository (`git ls-files`, up to about 12,000 characters)
   - the text of the last 4 messages in the conversation, each cut to 600 characters
 
-The repo file list and recent messages help Haiku spell file names and resolve words like "that" or "the bug". Turn the setting off to send only the dictation and dictionary.
+The repo file list and recent messages help Haiku spell file names and resolve words like "that" or "the bug". Turn the setting off to send only the dictation, dictionary and instructions.
 
 To get the file list, Saywright runs `git ls-files` in the session's working directory. That is the only command it runs.
 
@@ -68,7 +69,7 @@ To get the file list, Saywright runs `git ls-files` in the session's working dir
 
 ## Development
 
-The plugin is three TypeScript files in `hooks/`: `register.ts` (the hooks), `rewrite.ts` (pure logic and prompts) and `rewrite.test.ts`.
+The plugin's code is in `hooks/`: `register.ts` (the hooks) and `rewrite.ts` (pure logic and prompts). `rewrite.test.ts` tests the logic, and `flow.test.ts` drives the real hooks end to end with the engine stubbed (typed vs. tap vs. hold, failed rewrites, every setting).
 
 ```
 claude plugin validate .

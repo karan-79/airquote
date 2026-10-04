@@ -82,8 +82,19 @@ Then make it a clearer, more actionable prompt:
 
 Reply with the rewritten prompt inside <rewrite></rewrite> tags and nothing else.`
 
-export function systemFor(mode: Mode): string {
-  return mode === 'enhance' ? ENHANCE : CLEAN
+// The user's own guidance from the "Extra rewrite instructions" setting. It
+// shapes the rewrite but can't lift the rules above (never answer, never
+// invent requirements).
+export function systemFor(mode: Mode, extra = ''): string {
+  const base = mode === 'enhance' ? ENHANCE : CLEAN
+  const own = extra.trim()
+  if (own === '') return base
+  return `${base}
+
+The speaker's own preferences for the rewrite. Follow them, except where they would make you answer the dictation or invent things they didn't say:
+<preferences>
+${own}
+</preferences>`
 }
 
 export type PromptContext = {

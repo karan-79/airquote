@@ -69,6 +69,13 @@ describe('modes and output', () => {
     expect(systemFor('enhance')).toContain('Never pick a file for them')
     expect(systemFor('enhance')).toContain('this is a test')
   })
+  test('extra instructions are appended only when set', async () => {
+    expect(systemFor('clean', '')).toBe(systemFor('clean'))
+    expect(systemFor('clean', '  ')).toBe(systemFor('clean'))
+    const own = systemFor('enhance', 'keep my casual tone')
+    expect(own).toContain('<preferences>\nkeep my casual tone\n</preferences>')
+    expect(own.indexOf('NEVER invent requirements')).toBeLessThan(own.indexOf('<preferences>'))
+  })
   test('dictionary is comma or newline separated', async () => {
     expect(parseDictionary('Kubernetes, Tailwind ,, Acme Cloud\nRedis')).toEqual(['Kubernetes', 'Tailwind', 'Acme Cloud', 'Redis'])
     expect(parseDictionary('')).toEqual([])

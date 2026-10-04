@@ -16,7 +16,7 @@ import {
 } from './rewrite'
 import type { Mode, PromptContext } from './rewrite'
 
-type Settings = { mode: Mode; dictionary: string[]; shareContext: boolean }
+type Settings = { mode: Mode; dictionary: string[]; instructions: string; shareContext: boolean }
 
 async function gatherContext($: EngineInterface, settings: Settings): Promise<PromptContext> {
   if (!settings.shareContext) return { dictionary: settings.dictionary, files: [], recent: [] }
@@ -51,6 +51,7 @@ export const register: Register = (on, options) => {
   const settings: Settings = {
     mode: asMode(options.mode),
     dictionary: parseDictionary(String(options.dictionary ?? '')),
+    instructions: String(options.instructions ?? ''),
     shareContext: options.share_context !== false,
   }
 
@@ -154,7 +155,7 @@ export const register: Register = (on, options) => {
     const ctx = await gatherContext($, settings)
     const r = await $.model.complete({
       model: 'haiku',
-      system: systemFor(mode),
+      system: systemFor(mode, settings.instructions),
       prompt: promptFor(e.text, ctx),
       effort: 'low',
       maxTokens: 3000,
